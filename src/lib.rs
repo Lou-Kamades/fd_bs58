@@ -3,15 +3,6 @@
 //! repo which can be found [here]. These algorithms are significantly faster than the commonly used
 //! [`bs58`] library for 32 and 64 bytes.
 //!
-//! # Performance vs. [`bs58`]
-//!
-//!   Algorithm  |  Speedup        
-//! -------------|-----------
-//!  `encode_32` | ~9x
-//!  `encode_64` | ~13x
-//!  `decode_32` | ~3x
-//!  `decode_64` | ~5x
-//!
 //! [Base58]: https://en.wikipedia.org/wiki/Base58
 //! [`bs58`]: https://github.com/Nullus157/bs58-rs
 //! [Firedancer]: https://github.com/firedancer-io/firedancer

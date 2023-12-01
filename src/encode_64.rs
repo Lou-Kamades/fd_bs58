@@ -14,6 +14,8 @@ pub(crate) fn encode_64<I: AsRef<[u8]>>(input: I) -> String {
         in_leading_0s += 1;
     }
 
+    /* X = sum_i bytes[i] * 2^(8*(BYTE_CNT-1-i)) */
+
     let mut binary: [u32; BINARY_SZ_64] = [0; BINARY_SZ_64];
     let bytes_as_u32: &[u32] = unsafe {
         // Cast a reference to bytes as a reference to u32
@@ -23,16 +25,12 @@ pub(crate) fn encode_64<I: AsRef<[u8]>>(input: I) -> String {
         )
     };
 
-    /* X = sum_i bytes[i] * 2^(8*(BYTE_CNT-1-i)) */
-
     /* Convert N to 32-bit limbs:
     X = sum_i binary[i] * 2^(32*(BINARY_SZ-1-i)) */
 
     for i in 0..BINARY_SZ_64 {
         binary[i] = bytes_as_u32[i].to_be(); // Convert to big-endian (network byte order)
     }
-
-    let mut intermediate: [u64; INTERMEDIATE_SZ_64] = [0; INTERMEDIATE_SZ_64];
 
     /* Convert to the intermediate format:
       X = sum_i intermediate[i] * 58^(5*(INTERMEDIATE_SZ-1-i))
@@ -51,6 +49,7 @@ pub(crate) fn encode_64<I: AsRef<[u8]>>(input: I) -> String {
     won't exceed 2^63.69, which is fine. Other terms are less than
     2^63.76, so no problems there. */
 
+    let mut intermediate: [u64; INTERMEDIATE_SZ_64] = [0; INTERMEDIATE_SZ_64];
     for i in 0..8 {
         for j in 0..INTERMEDIATE_SZ_64 - 1 {
             intermediate[j + 1] += u64::from(binary[i]) * u64::from(ENC_TABLE_64[i][j]);
@@ -83,6 +82,11 @@ pub(crate) fn encode_64<I: AsRef<[u8]>>(input: I) -> String {
         intermediate[i - 1] += intermediate[i] / R1_DIV;
         intermediate[i] %= R1_DIV;
     }
+
+    /* Convert intermediate form to base 58.  This form of conversion
+    exposes tons of ILP, but it's more than the CPU can take advantage
+    of.
+      X = sum_i raw_base58[i] * 58^(RAW58_SZ-1-i) */
 
     let mut raw_base58: [u8; RAW58_SZ_64] = [0; RAW58_SZ_64];
 
